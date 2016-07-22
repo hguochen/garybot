@@ -72,12 +72,34 @@ def post_facebook_message(fbid, recevied_message):
         response_medium = 'template'
         response_variant = 'trending'
     elif 'random' in tokens or 'campaign' in tokens:
-        response_medium = 'template'
+        response_medium = 'random'
         response_variant = 'random'
         fund_ids = [11612547, 11945897, 11202935, 12896155, 11155025, 11400025, 11400023, 11400033, 11400031, 11400035, 11400037, 11400039, 11400019, 11400017, 11400015, 11400013, 11400007]
         random_fund_id = fund_ids[random.randint(0, len(fund_ids)-1)]
         fund = requests.get('http://192.168.3.79/funds/v1/funds/%s' % random_fund_id).json()
-
+    elif 'login' in tokens:
+        
+        login_params = {
+            "recipient" : {
+                "id":fbid
+            },
+            "message" : {
+                "attachment" : {
+                    "type" : "template",
+                    "payload" : {
+                        "template_type" : "generic",
+                        "elements" : [{
+                            "title" : "Welcome to GoFundMe",
+                            "image_url" : "http://a3.mzstatic.com/us/r30/Purple60/v4/fe/ad/29/fead29c2-f5e1-55ea-7e12-9ce64ba3a12c/icon175x175.png",
+                            "buttons" : [{
+                                "type" : "account_link",
+                                "url" : "https://gofundme.com/oauth/authorize"
+                            }]
+                        }]
+                    }
+                }
+            }
+        }
     elif not response_text:
         response_text = "Sorry " + user_details['first_name'] + ", I don't understand that. Can you rephrase please?"
     
@@ -95,8 +117,37 @@ def post_facebook_message(fbid, recevied_message):
         pprint(status.json())
     elif response_medium == 'template':
         variant_data = {
-            "trending" : nearby_data,
+            "trending" : trending_data,
             "nearby"   : nearby_data,
+            "login" : {
+                "attachment" : {
+                    "type" : "template",
+                    "payload" : {
+                        "template_type" : "generic",
+                        "elements" : [{
+                            "title" : "Welcome to GoFundMe",
+                            "image_url" : "http://a3.mzstatic.com/us/r30/Purple60/v4/fe/ad/29/fead29c2-f5e1-55ea-7e12-9ce64ba3a12c/icon175x175.png",
+                            "buttons" : [{
+                                "type" : "account_link",
+                                "url" : "https://www.example.com/oauth/authorize"
+                            }]
+                        }]
+                    }
+                }
+            },
+        }
+        response_msg = json.dumps({
+            "recipient" : {
+                "id" : fbid
+            }, 
+            "message" : variant_data[response_variant]
+        })
+        status = requests.post(post_message_url, headers={"Content-Type": "application/json"},data=response_msg)
+        pprint(status.json())
+    elif response_medium == 'profile':
+        pass
+    elif response_medium == 'random':
+        variant_data = {
             "random"   : {
                 "attachment" : {
                     "type" : "template",
@@ -123,7 +174,7 @@ def post_facebook_message(fbid, recevied_message):
                         ]
                     }
                 }
-            },
+            }
         }
         response_msg = json.dumps({
             "recipient" : {
@@ -133,8 +184,6 @@ def post_facebook_message(fbid, recevied_message):
         })
         status = requests.post(post_message_url, headers={"Content-Type": "application/json"},data=response_msg)
         pprint(status.json())
-    elif response_medium == 'profile':
-        pass
     
 
 
@@ -179,7 +228,100 @@ persist_menu_data = {
         }
     ]
 }
-
+trending_data = {
+    "attachment" : {
+                    "type" : "template",
+                    "payload" : {
+                        "template_type": "generic",
+                        "elements" : [
+                            {
+                                "title" : "Help Abbey",
+                                "image_url" : "https://44cd8574c19e363b1af4-9bfca67f877491754ae0570b8c65e031.ssl.cf1.rackcdn.com/12986735_fb_1468690566.7082_funds.jpg",
+                                "subtitle" : "$17,561 raised",
+                                "buttons" : [
+                                    {
+                                        "type" : "web_url",
+                                        "url" : "https://gofundme.com/2erpq24",
+                                        "title" : "View Website"
+                                    }
+                                ]
+                            },
+                            {
+                                "title" : "Miracles for Madison",
+                                "image_url" : "https://44cd8574c19e363b1af4-9bfca67f877491754ae0570b8c65e031.ssl.cf1.rackcdn.com/13092563_1469026002.3389.jpg",
+                                "subtitle" : "$33,744 raised",
+                                "buttons" : [
+                                    {
+                                        "type" : "web_url",
+                                        "url" : "https://gofundme.com/2fh63ng",
+                                        "title" : "View Website"
+                                    }
+                                ]
+                            },
+                            {
+                                "title" : "Journey's Vetinary Treatment",
+                                "image_url" : "https://44cd8574c19e363b1af4-9bfca67f877491754ae0570b8c65e031.ssl.cf1.rackcdn.com/13126551_14691278120_r.jpg",
+                                "subtitle" : "$4,704 raised",
+                                "buttons" : [
+                                    {
+                                        "type" : "web_url",
+                                        "url" : "https://gofundme.com/journeysvet",
+                                        "title" : "View Website"
+                                    }
+                                ]
+                            },
+                            {
+                                "title" : "Save Hank and Helen's Home",
+                                "image_url" : "https://44cd8574c19e363b1af4-9bfca67f877491754ae0570b8c65e031.ssl.cf1.rackcdn.com/11915301_1464909751.0069.jpg",
+                                "subtitle" : "$29,407 raised",
+                                "buttons" : [
+                                    {
+                                        "type" : "web_url",
+                                        "url" : "https://gofundme.com/27m9zvn3",
+                                        "title" : "View Website"
+                                    }
+                                ]
+                            },
+                            {
+                                "title" : "give Cole Kinney proper rest",
+                                "image_url" : "https://44cd8574c19e363b1af4-9bfca67f877491754ae0570b8c65e031.ssl.cf1.rackcdn.com/13120919_1469113107.8816.jpg",
+                                "subtitle" : "$20,680 raised",
+                                "buttons" : [
+                                    {
+                                        "type" : "web_url",
+                                        "url" : "https://gofundme.com/2fnznzjs",
+                                        "title" : "View Website"
+                                    }
+                                ]
+                            },
+                            {
+                                "title" : "Please donate @ we stand with Gaspar",
+                                "image_url" : "https://44cd8574c19e363b1af4-9bfca67f877491754ae0570b8c65e031.ssl.cf1.rackcdn.com/12979619_1468642068.6079.jpg",
+                                "subtitle" : "$5,871 raised",
+                                "buttons" : [
+                                    {
+                                        "type" : "web_url",
+                                        "url" : "https://gofundme.com/2eqxq3ss",
+                                        "title" : "View Website"
+                                    }
+                                ]
+                            },
+                            {
+                                "title" : "Help Chance Pay for School",
+                                "image_url" : "https://44cd8574c19e363b1af4-9bfca67f877491754ae0570b8c65e031.ssl.cf1.rackcdn.com/12984905_1468677139.3091.jpg",
+                                "subtitle" : "$1,891 raised",
+                                "buttons" : [
+                                    {
+                                        "type" : "web_url",
+                                        "url" : "https://gofundme.com/helpchanceplz",
+                                        "title" : "View Website"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+}
 nearby_data = {
                 "attachment" : {
                     "type" : "template",
