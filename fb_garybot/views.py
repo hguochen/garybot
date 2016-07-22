@@ -1,4 +1,5 @@
 import json, requests, random, re
+from pprint import pprint
 
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -22,14 +23,31 @@ facts = {
         "Courtney is also a girl's name",
     ],
 }
+def post_facebook_message(fbid, recevied_message):
+    # Remove all punctuations, lower case the text and split it based on space
+    tokens = re.sub(r"[^a-zA-Z0-9\s]",' ',recevied_message).lower().split()
+    response_text = ''
+    for token in tokens:
+        if token in facts:
+            response_text = random.choice(facts[token])
+            break
+    if recevied_message in facts:
+        response_text = random.choice(facts[recevied_message.lower()])
+    if not response_text:
+        response_text = "I don't understand! Can you rephrase please?"
+
+    post_message_url = 'https://graph.facebook.com/v2.6/me/messages?access_token=EAAWXRgus2csBALfz5S21sFpZAchEEuYHiCo8OwzViHzFIrXs06zdFzuN1HskDAVoe1OFxG7JTZBRQ0imQjZApZA7IjjQS4UZAKgbBWSiiXaZBfokVNwMlHyMqfSXpxm3WuBT7kiZBL0hdh8WDz09JloZCbnEbBZAKAZAZC9RuqnWJEZBlAZDZD'
+    response_msg = json.dumps({"recipient":{"id":fbid}, "message":{"text":response_text}})
+    status = requests.post(post_message_url, headers={"Content-Type": "application/json"},data=response_msg)
+    pprint(status.json())
+
 
 class GaryBotView(generic.View):
     def get(self, request, *args, **kwargs):
-        if self.request.GET['hub.verify_token'] == 'thisisgarysecretbot':
+        if self.request.GET['hub.verify_token'] == 'mytoken':
             return HttpResponse(self.request.GET['hub.challenge'])
-        return HttpResponse("100460735")
+        return HttpResponse("Error, invalid token")
 
-    # The get method is the same as before.. omitted here for brevity
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
         return generic.View.dispatch(self, request, *args, **kwargs)
@@ -46,26 +64,8 @@ class GaryBotView(generic.View):
                 # This might be delivery, optin, postback for other events 
                 if 'message' in message:
                     # Print the message to the terminal
-                    print message
+                    pprint(message)
                     # Assuming the sender only sends text. Non-text messages like stickers, audio, pictures
                     # are sent as attachments and must be handled accordingly. 
                     post_facebook_message(message['sender']['id'], message['message']['text'])
         return HttpResponse()
-
-def post_facebook_message(fbid, recevied_message):
-    # Remove all punctuations, lower case the text and split it based on space
-    tokens = re.sub(r"[^a-zA-Z0-9\s]",' ',recevied_message).lower().split()
-    response_text = ''
-    for token in tokens:
-        if token in facts:
-            response_text = random.choice(facts[token])
-            break
-    
-    response_text = random.choice(facts[recevied_message.lower()])
-    if not response_text:
-        response_text = "I don't understand! Can you rephrase please?"
-
-    post_message_url = 'https://graph.facebook.com/v2.6/me/messages?access_token=EAAWXRgus2csBAK1yBxDxAyBbfVJF0aZC71woZCCZBH3ItRBwBZCZCsTZB0AK5mudAs8EwI8n5ZAcJhCstBGxTwz4PIlYR8eClIRDSYplhcQy0JG6qPhyD0ZAWiWZBb5lNKtoZAy53DSw7QhaeGUAxlAyD8Of307OIVQbveadvyDKdDXAZDZD' 
-    response_msg = json.dumps({"recipient":{"id":fbid}, "message":{"text":response_text}})
-    status = requests.post(post_message_url, headers={"Content-Type": "application/json"},data=response_msg)
-    print status.json()
