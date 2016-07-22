@@ -67,18 +67,16 @@ def post_facebook_message(fbid, recevied_message):
     elif 'nearby' in tokens:
         response_medium = 'template'
         response_variant = 'nearby'
-    # TODO: COMPLETE TRENDING DATA
     elif 'trending' in tokens:
         response_medium = 'template'
         response_variant = 'trending'
-    elif 'random' in tokens or 'campaign' in tokens:
+    elif 'random' in tokens or 'campaign' in tokens or 'another' in tokens:
         response_medium = 'random'
         response_variant = 'random'
         fund_ids = [11612547, 11945897, 11202935, 12896155, 11155025, 11400025, 11400023, 11400033, 11400031, 11400035, 11400037, 11400039, 11400019, 11400017, 11400015, 11400013, 11400007]
         random_fund_id = fund_ids[random.randint(0, len(fund_ids)-1)]
         fund = requests.get('http://192.168.3.79/funds/v1/funds/%s' % random_fund_id).json()
     elif 'login' in tokens:
-        
         login_params = {
             "recipient" : {
                 "id":fbid
@@ -100,6 +98,42 @@ def post_facebook_message(fbid, recevied_message):
                 }
             }
         }
+        response_medium == 'template'
+    elif 'receipt' in tokens:
+        response_msg = json.dumps({
+            "recipient" : {
+                "id":fbid
+            },
+            "message":{
+                "attachment" : {
+                    "type" : "template",
+                    "payload" : {
+                        "template_type" : "receipt",
+                        "recipient_name": "Gary Hou",
+                        "order_number" : "23525654",
+                        "currency" : "USD",
+                        "payment_method" : "Visa 2526",
+                        "order_url" : "https://gofundme.com/parsen9",
+                        "timestamp" : "1428444852",
+                        "elements" : [
+                            {
+                                "title" : "Live testing",
+                                "subtitle" : "$5,262 raised.",
+                                "price" : 30,
+                                "image_url" : "https://2dbdd5116ffa30a49aa8-c03f075f8191fb4e60e74b907071aee8.ssl.cf1.rackcdn.com/7510313_1467928628.0514.jpg",
+                            }
+                        ],
+                        
+                        "summary" : {
+                            "subtotal" : 30,
+                            "total_cost" : 30,
+                        },
+                    }
+                }
+            }
+        })
+        status = requests.post('https://graph.facebook.com/v2.6/me/messages?access_token=%s' % ACCESS_TOKEN, headers={"Content-Type": "application/json"},data=response_msg)
+        pprint(status.json())
     elif not response_text:
         response_text = "Sorry " + user_details['first_name'] + ", I don't understand that. Can you rephrase please?"
     
