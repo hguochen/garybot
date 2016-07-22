@@ -28,17 +28,18 @@ def post_facebook_message(fbid, recevied_message):
     # user data
     user_details_url = "https://graph.facebook.com/v2.6/%s"%fbid
     user_details_params = {
-        'fields':'first_name,last_name,profile_pic',
+        'fields':'first_name,last_name,profile_pic,locale,timezone,gender',
         'access_token': ACCESS_TOKEN
     }
     user_details = requests.get(user_details_url, user_details_params).json()
 
     # persist menu
     persist_menu_url = "https://graph.facebook.com/v2.6/me/thread_settings?access_token=%s" % ACCESS_TOKEN
-    pprint(requests.post(
+    persist_status = requests.post(
         persist_menu_url,
         headers={"Content-Type": "application/json"},
-        data=persist_menu_data).json())
+        data=persist_menu_data)
+    pprint(persist_status.json())
 
     # user text input
     response_medium = 'text'
@@ -55,11 +56,28 @@ def post_facebook_message(fbid, recevied_message):
         response_text = 'Hello ' + user_details['first_name'] + '! How are you feeling today?'
     elif 'pokemon' in tokens:
         response_text = 'There are 250 pokemons in total.'
+    elif 'about' in tokens and 'me' in tokens:
+        if user_details['gender'] == 'male':
+            flower_text = 'handsome man!'
+        else:
+            flower_text = 'pretty girl!'
+        response_text = 'Hello %s %s, i believe you are a %s' % (user_details['first_name'], user_details['last_name'], flower_text)
+    elif 'thank' in tokens or 'thanks' in tokens:
+        response_text = "You're welcome!"
     elif 'nearby' in tokens:
         response_medium = 'template'
+        response_variant = 'nearby'
     # TODO: COMPLETE TRENDING DATA
     elif 'trending' in tokens:
         response_medium = 'template'
+        response_variant = 'trending'
+    elif 'random' in tokens or 'campaign' in tokens:
+        response_medium = 'template'
+        response_variant = 'random'
+        fund_ids = [11612547, 11945897, 11202935, 12896155, 11155025, 11400025, 11400023, 11400033, 11400031, 11400035, 11400037, 11400039, 11400019, 11400017, 11400015, 11400013, 11400007]
+        random_fund_id = fund_ids[random.randint(0, len(fund_ids)-1)]
+        fund = requests.get('http://192.168.3.79/funds/v1/funds/%s' % random_fund_id).json()
+
     elif not response_text:
         response_text = "Sorry " + user_details['first_name'] + ", I don't understand that. Can you rephrase please?"
     
@@ -73,15 +91,51 @@ def post_facebook_message(fbid, recevied_message):
                 "text":response_text
             }
         })
+        status = requests.post(post_message_url, headers={"Content-Type": "application/json"},data=response_msg)
+        pprint(status.json())
     elif response_medium == 'template':
+        variant_data = {
+            "trending" : nearby_data,
+            "nearby"   : nearby_data,
+            "random"   : {
+                "attachment" : {
+                    "type" : "template",
+                    "payload" : {
+                        "template_type": "generic",
+                        "elements" : [
+                            {
+                                "title" : fund['name'],
+                                "image_url" : fund['main_image_url'],
+                                "subtitle" : "$%s raised" % fund['balance'],
+                                "buttons" : [
+                                    {
+                                        "type" : "web_url",
+                                        "url" : "https://gofundme.com/%s" % fund['url'],
+                                        "title" : "View Website"
+                                    },
+                                    {
+                                        "type":"postback",
+                                        "title":"Donate",
+                                        "payload":"USER_DEFINED_PAYLOAD"
+                                    }
+                                ]
+                            },
+                        ]
+                    }
+                }
+            },
+        }
         response_msg = json.dumps({
             "recipient" : {
                 "id" : fbid
             }, 
-            "message" : nearby_data
+            "message" : variant_data[response_variant]
         })
-    status = requests.post(post_message_url, headers={"Content-Type": "application/json"},data=response_msg)
-    pprint(status.json())
+        status = requests.post(post_message_url, headers={"Content-Type": "application/json"},data=response_msg)
+        pprint(status.json())
+    elif response_medium == 'profile':
+        pass
+    
 
 
 
